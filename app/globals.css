@@ -1,26 +1,232 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ───────────────────────── Design tokens ─────────────────────────
+   Palette is taken from the original deck: burgundy, antique gold,
+   muted teal and ink on warm ivory. Dark theme keeps the same hues,
+   lifted for contrast on a deep aubergine-black. */
+
+:root,
+[data-theme="light"] {
+  --c-bg: #f7f2ea;
+  --c-bg-2: #efe5d8;
+  --c-surface: rgba(255, 253, 250, 0.82);
+  --c-surface-solid: #fffdfa;
+  --c-border: rgba(109, 30, 59, 0.13);
+  --c-hair: rgba(27, 41, 56, 0.09);
+  --c-ink: #1b2938;
+  --c-muted: #48535f;
+  --c-subtle: #8a8279;
+  --c-wine: #6d1e3b;
+  --c-wine-2: #8e2b4f;
+  --c-wine-soft: rgba(109, 30, 59, 0.075);
+  --c-gold: #b99665;
+  --c-gold-ink: #8a6638;
+  --c-gold-soft: rgba(185, 150, 101, 0.16);
+  --c-teal: #44727a;
+  --c-teal-soft: rgba(68, 114, 122, 0.1);
+  --c-glow-1: rgba(109, 30, 59, 0.07);
+  --c-glow-2: rgba(185, 150, 101, 0.14);
+  --shadow-card:
+    0 1px 0 rgba(255, 255, 255, 0.75) inset,
+    0 30px 60px -40px rgba(84, 28, 46, 0.32),
+    0 2px 8px -3px rgba(84, 28, 46, 0.08);
+  --shadow-lift:
+    0 1px 0 rgba(255, 255, 255, 0.75) inset,
+    0 40px 70px -38px rgba(84, 28, 46, 0.42),
+    0 4px 14px -4px rgba(84, 28, 46, 0.12);
+  --grain-opacity: 0.05;
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --c-bg: #130e12;
+  --c-bg-2: #1b1419;
+  --c-surface: rgba(255, 240, 228, 0.045);
+  --c-surface-solid: #1d161b;
+  --c-border: rgba(232, 196, 170, 0.13);
+  --c-hair: rgba(243, 236, 227, 0.08);
+  --c-ink: #f4ede4;
+  --c-muted: #c6bab0;
+  --c-subtle: #8f847b;
+  --c-wine: #e58daa;
+  --c-wine-2: #f2a8c0;
+  --c-wine-soft: rgba(229, 141, 170, 0.1);
+  --c-gold: #d5b27b;
+  --c-gold-ink: #dfc08e;
+  --c-gold-soft: rgba(213, 178, 123, 0.12);
+  --c-teal: #8cc3c9;
+  --c-teal-soft: rgba(140, 195, 201, 0.1);
+  --c-glow-1: rgba(180, 50, 95, 0.16);
+  --c-glow-2: rgba(213, 178, 123, 0.08);
+  --shadow-card:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 30px 60px -40px rgba(0, 0, 0, 0.8);
+  --shadow-lift:
+    0 1px 0 rgba(255, 255, 255, 0.07) inset,
+    0 40px 70px -36px rgba(0, 0, 0, 0.9);
+  --grain-opacity: 0.07;
+  color-scheme: dark;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--c-bg);
+  --color-bg-2: var(--c-bg-2);
+  --color-surface: var(--c-surface);
+  --color-surface-solid: var(--c-surface-solid);
+  --color-line: var(--c-border);
+  --color-hair: var(--c-hair);
+  --color-ink: var(--c-ink);
+  --color-muted: var(--c-muted);
+  --color-subtle: var(--c-subtle);
+  --color-wine: var(--c-wine);
+  --color-wine-2: var(--c-wine-2);
+  --color-wine-soft: var(--c-wine-soft);
+  --color-gold: var(--c-gold);
+  --color-gold-ink: var(--c-gold-ink);
+  --color-gold-soft: var(--c-gold-soft);
+  --color-teal: var(--c-teal);
+  --color-teal-soft: var(--c-teal-soft);
+  --font-display: var(--font-fraunces);
+  --font-sans: var(--font-manrope);
+  --font-mono: var(--font-jetbrains);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Tone scopes: components read --tone / --tone-soft / --tone-ink */
+.tone-wine {
+  --tone: var(--c-wine);
+  --tone-ink: var(--c-wine);
+  --tone-soft: var(--c-wine-soft);
+}
+.tone-gold {
+  --tone: var(--c-gold);
+  --tone-ink: var(--c-gold-ink);
+  --tone-soft: var(--c-gold-soft);
+}
+.tone-teal {
+  --tone: var(--c-teal);
+  --tone-ink: var(--c-teal);
+  --tone-soft: var(--c-teal-soft);
+}
+
+/* ───────────────────────── Base ───────────────────────── */
+
+html,
+body {
+  height: 100%;
+  background: var(--c-bg);
+  color: var(--c-ink);
+  overflow: hidden;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-manrope), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "ss01", "cv11";
+  transition: background-color 0.6s ease, color 0.6s ease;
+}
+
+::selection {
+  background: var(--c-gold-soft);
+  color: var(--c-ink);
+}
+
+.font-display {
+  font-optical-sizing: auto;
+  letter-spacing: -0.018em;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Outlined giant section numeral */
+.numeral-outline {
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--c-gold);
+}
+
+/* Paper grain overlay */
+.grain {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.35  0 0 0 0 0.2  0 0 0 0 0.15  0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  opacity: var(--grain-opacity);
+  mix-blend-mode: multiply;
+}
+[data-theme="dark"] .grain {
+  mix-blend-mode: screen;
+}
+
+/* SVG illustration strokes */
+.s-wine { stroke: var(--c-wine); }
+.s-gold { stroke: var(--c-gold); }
+.s-teal { stroke: var(--c-teal); }
+.s-ink { stroke: var(--c-ink); }
+.s-hair { stroke: var(--c-hair); }
+.f-wine { fill: var(--c-wine); }
+.f-gold { fill: var(--c-gold); }
+.f-teal { fill: var(--c-teal); }
+.f-wine-soft { fill: var(--c-wine-soft); }
+.f-gold-soft { fill: var(--c-gold-soft); }
+.f-teal-soft { fill: var(--c-teal-soft); }
+.f-surface { fill: var(--c-surface-solid); }
+
+/* Slow ambient motion (cheap, GPU-only transforms) */
+@keyframes drift-a {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-60px, 40px, 0) scale(1.08); }
+}
+@keyframes drift-b {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(70px, -30px, 0) scale(1.06); }
+}
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.12); }
+}
+@keyframes ring-out {
+  0% { opacity: 0.7; transform: scale(0.4); }
+  100% { opacity: 0; transform: scale(1.35); }
+}
+@keyframes shimmer {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(220%); }
+}
+
+.animate-drift-a { animation: drift-a 26s ease-in-out infinite; }
+.animate-drift-b { animation: drift-b 32s ease-in-out infinite; }
+.animate-spin-slow { animation: spin-slow 90s linear infinite; }
+.animate-spin-mid { animation: spin-slow 40s linear infinite; }
+.animate-float { animation: float-y 7s ease-in-out infinite; }
+.animate-pulse-soft { animation: pulse-soft 2.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.animate-ring-out { animation: ring-out 3.2s cubic-bezier(0.2, 0.6, 0.3, 1) infinite; transform-box: fill-box; transform-origin: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-drift-a,
+  .animate-drift-b,
+  .animate-spin-slow,
+  .animate-spin-mid,
+  .animate-float,
+  .animate-pulse-soft,
+  .animate-ring-out {
+    animation: none;
+  }
+}
+
+/* Dark theme: flip the ivory cover art into an X-ray-like negative, keeping hues */
+[data-theme="dark"] .cover-img {
+  filter: invert(0.94) hue-rotate(180deg) saturate(1.15) brightness(0.92);
+}
+
+/* Scrollbar inside overview */
+.thin-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-border) transparent;
 }
