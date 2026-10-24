@@ -1,7 +1,7 @@
 # Post-Stroke Seizure Management — Board Teaching deck
 
 Animated web presentation (Next.js 16 · Motion · Tailwind 4) rebuilt from
-`Post_Stroke_Seizure_Board_Ready_Final_With_Title_Image.pptx` — 47 original slides + a closing slide.
+`Post_Stroke_Seizure_Final_Reordered_48_Slides.pptx` — 48 original slides + a closing slide.
 
 ## Run
 

@@ -11,9 +11,9 @@ export const sections: Record<SectionId, Section> = {
   "04": { num: "04", name: "Diagnosis & investigations" },
   "05": { num: "05", name: "Differential diagnosis" },
   "06": { num: "06", name: "Management" },
-  "07": { num: "07", name: "Status epilepticus" },
-  "08": { num: "08", name: "Nonconvulsive status epilepticus" },
-  "09": { num: "09", name: "Prophylaxis & special situations" },
+  "07": { num: "07", name: "Prophylaxis & special situations" },
+  "08": { num: "08", name: "Status epilepticus" },
+  "09": { num: "09", name: "Nonconvulsive status epilepticus" },
   "10": { num: "10", name: "Long-term ASM" },
   "11": { num: "11", name: "Duration & follow-up" },
   "12": { num: "12", name: "Todd paralysis" },
@@ -469,17 +469,56 @@ export const slides: Slide[] = [
     ],
   },
   {
-    kind: "eeg",
+    kind: "eegPatterns",
     section: "04",
-    title: "EEG language: seizure, IIC, and nonspecific slowing",
-    source: "p. 17",
-    visual: "eeg",
-    traces: [
-      { label: "Interictal spike / sharp wave", tag: "Epileptiform", pattern: "spike", tone: "wine" },
-      { label: "Periodic epileptiform pattern", tag: "IIC context", pattern: "periodic", tone: "gold" },
-      { label: "Focal slowing", tag: "Not a seizure by itself", pattern: "slow", tone: "teal" },
+    title: "EEG patterns: interictal background and focal slowing",
+    patterns: [
+      {
+        num: "1",
+        label: "Interictal EEG",
+        aside: "between seizures",
+        trace: "background",
+        tone: "teal",
+        shows: ["Normal background activity (e.g., alpha rhythm, theta, beta)", "No epileptiform discharges"],
+        suggests: ["Normal EEG or no evidence of active epileptiform activity between seizures"],
+      },
+      {
+        num: "2",
+        label: "Focal slowing",
+        aside: "e.g., left temporal slowing",
+        trace: "focalSlowing",
+        tone: "gold",
+        marker: "Focal slowing (left temporal)",
+        shows: ["Slower background rhythms (theta or delta)", "Often seen in a specific region (focal)", "No clear spikes or sharp waves"],
+        suggests: ["Focal cerebral dysfunction (e.g., structural lesion, ischemia, post-ictal state, or tumor)"],
+      },
     ],
-    note: "Schematic tracings only — not patient EEG or a substitute for ACNS terminology.",
+    note: "Schematic bipolar tracings — not patient EEG",
+  },
+  {
+    kind: "eegPatterns",
+    section: "04",
+    title: "EEG patterns: epileptiform discharges",
+    patterns: [
+      {
+        num: "3",
+        label: "Epileptiform discharges",
+        aside: "e.g., spike and wave",
+        trace: "spikeWave",
+        tone: "wine",
+        marker: "Spike and wave discharge",
+        shows: [
+          "Sharp waves, spikes, or spike-and-wave complexes",
+          "Usually with a characteristic morphology",
+          "May be focal or generalized",
+        ],
+        suggests: [
+          "Increased risk of seizures / epilepsy",
+          "Helps with localization (focal) or classification (generalized vs focal)",
+        ],
+      },
+    ],
+    note: "Schematic bipolar tracings — not patient EEG",
   },
 
   // ───────────── 05 · Differential diagnosis ─────────────
@@ -598,10 +637,114 @@ export const slides: Slide[] = [
     ],
   },
 
-  // ───────────── 07 · Status epilepticus ─────────────
+  // ───────────── 07 · Prophylaxis & special situations ─────────────
+  {
+    kind: "columns",
+    section: "07",
+    title: "Ischemic stroke: prophylaxis and therapy",
+    source: "p. 33",
+    visual: "shield",
+    columns: [
+      {
+        label: "No documented seizure",
+        icon: "ban",
+        tone: "teal",
+        items: [
+          "2026 AHA/ASA: prophylactic ASM is **not recommended** to prevent seizures or improve outcomes.",
+          "SeLECT or severe cortical stroke alone does not alter that recommendation.",
+          "Routine EEG screening of every AIS patient is not evidence-established.",
+        ],
+      },
+      {
+        label: "After a seizure",
+        icon: "pill",
+        tone: "wine",
+        items: [
+          "Early acute symptomatic: treat event and reversible causes; individualize short treatment.",
+          "Remote unprovoked: initiating ASM is reasonable after patient-specific assessment.",
+          "Choice and duration: age, comorbidity, seizure severity, adverse effects and interactions.",
+        ],
+      },
+    ],
+  },
+  {
+    kind: "columns",
+    section: "07",
+    title: "Spontaneous ICH: updated 2025 guidance",
+    source: "p. 34",
+    visual: "vessel",
+    columns: [
+      {
+        label: "Primary prophylaxis",
+        icon: "shield",
+        tone: "teal",
+        items: [
+          "AHA/ASA 2022: no routine prophylactic ASM in ICH without seizure.",
+          "NCS guideline (published 2025): suggest avoiding prophylaxis; very-low-certainty evidence.",
+          "If nevertheless used: NCS prefers **levetiracetam over phenytoin** and **≤7 days**, conditionally.",
+        ],
+      },
+      {
+        label: "After early ICH seizure",
+        icon: "zap",
+        tone: "wine",
+        items: [
+          "Treat definite clinical or electrographic seizures; EEG if consciousness unexplained.",
+          "ESO/EANS 2025: evidence insufficient for a general immediate ASM recommendation after ASS.",
+          "Expert consensus: if started after ≤7-day seizure and seizure-free, consider discontinuation from **4 weeks** onward.",
+        ],
+      },
+    ],
+  },
+  {
+    kind: "columns",
+    section: "07",
+    title: "Aneurysmal SAH: seizure prevention is selective",
+    source: "p. 35",
+    visual: "vessel",
+    columns: [
+      {
+        label: "Who is high-risk?",
+        icon: "target",
+        tone: "gold",
+        items: [
+          "AHA/ASA 2023: consider prophylaxis only with ruptured MCA aneurysm, intraparenchymal hemorrhage, high-grade aSAH, hydrocephalus or cortical infarction.",
+          "A large minority may have electrographic seizures, especially with impaired consciousness.",
+          "Avoid routine phenytoin because of associated excess morbidity.",
+        ],
+      },
+      {
+        label: "When a seizure occurs",
+        icon: "zap",
+        tone: "wine",
+        items: [
+          "Treat new-onset seizure after aSAH with ASM for **7 days** (AHA/ASA 2023).",
+          "Evaluate rebleeding and aneurysm securement if deterioration or new seizure.",
+          "Longer therapy only if separate compelling indications, such as later epilepsy.",
+          "Consider cEEG with fluctuating or depressed consciousness.",
+        ],
+      },
+    ],
+  },
+  {
+    kind: "table",
+    section: "07",
+    title: "Cross-guideline comparison: three stroke scenarios",
+    source: "p. 36",
+    visual: "shield",
+    columns: ["Scenario", "Routine primary prophylaxis?", "If seizures / high risk", "Duration / evidence"],
+    widths: [0.72, 1, 1.1, 1.15],
+    rows: [
+      ["Acute ischemic stroke", "**No** — AHA/ASA 2026", "Early: treat and review; late: usually sustained ASM", "No fixed early duration established"],
+      ["Spontaneous ICH", "**No** — AHA/ASA 2022; ESO/EANS 2025; NCS 2025", "Treat definite events; EEG if altered consciousness", "Prophylaxis if used: NCS ≤7 days; after ASS: ESO/EANS consider stopping from week 4"],
+      ["Aneurysmal SAH", "**No universal prophylaxis** — AHA/ASA 2023", "May consider in specified high-risk patients; treat new-onset seizures", "AHA/ASA: 7 days after aSAH new-onset seizure; avoid phenytoin"],
+    ],
+  },
+
+  // ───────────── 08 · Status epilepticus ─────────────
   {
     kind: "steps",
-    section: "07",
+    section: "08",
     title: "Status epilepticus: first five minutes",
     source: "p. 24",
     visual: "stopwatch",
@@ -616,7 +759,7 @@ export const slides: Slide[] = [
   },
   {
     kind: "table",
-    section: "07",
+    section: "08",
     title: "First-line benzodiazepines: adult convulsive SE",
     source: "p. 25",
     visual: "syringe",
@@ -630,7 +773,7 @@ export const slides: Slide[] = [
   },
   {
     kind: "table",
-    section: "07",
+    section: "08",
     title: "Benzodiazepine-resistant SE: IV loading",
     source: "p. 26",
     visual: "syringe",
@@ -644,7 +787,7 @@ export const slides: Slide[] = [
   },
   {
     kind: "flow",
-    section: "07",
+    section: "08",
     title: "Time-based status pathway: bedside algorithm",
     source: "p. 27",
     visual: "stopwatch",
@@ -661,10 +804,10 @@ export const slides: Slide[] = [
     },
   },
 
-  // ───────────── 08 · NCSE ─────────────
+  // ───────────── 09 · NCSE ─────────────
   {
     kind: "cards",
-    section: "08",
+    section: "09",
     title: "NCSE: why stroke units miss it",
     source: "p. 28",
     visual: "radar",
@@ -697,7 +840,7 @@ export const slides: Slide[] = [
   },
   {
     kind: "flow",
-    section: "08",
+    section: "09",
     title: "NCSE pathway after stroke: persistent altered state",
     source: "p. 29",
     visual: "radar",
@@ -712,110 +855,6 @@ export const slides: Slide[] = [
       tone: "caution",
       text: "A normal 20-minute EEG does **not** reliably exclude intermittent electrographic seizures.",
     },
-  },
-
-  // ───────────── 09 · Prophylaxis & special situations ─────────────
-  {
-    kind: "columns",
-    section: "09",
-    title: "Ischemic stroke: prophylaxis and therapy",
-    source: "p. 33",
-    visual: "shield",
-    columns: [
-      {
-        label: "No documented seizure",
-        icon: "ban",
-        tone: "teal",
-        items: [
-          "2026 AHA/ASA: prophylactic ASM is **not recommended** to prevent seizures or improve outcomes.",
-          "SeLECT or severe cortical stroke alone does not alter that recommendation.",
-          "Routine EEG screening of every AIS patient is not evidence-established.",
-        ],
-      },
-      {
-        label: "After a seizure",
-        icon: "pill",
-        tone: "wine",
-        items: [
-          "Early acute symptomatic: treat event and reversible causes; individualize short treatment.",
-          "Remote unprovoked: initiating ASM is reasonable after patient-specific assessment.",
-          "Choice and duration: age, comorbidity, seizure severity, adverse effects and interactions.",
-        ],
-      },
-    ],
-  },
-  {
-    kind: "columns",
-    section: "09",
-    title: "Spontaneous ICH: updated 2025 guidance",
-    source: "p. 34",
-    visual: "vessel",
-    columns: [
-      {
-        label: "Primary prophylaxis",
-        icon: "shield",
-        tone: "teal",
-        items: [
-          "AHA/ASA 2022: no routine prophylactic ASM in ICH without seizure.",
-          "NCS guideline (published 2025): suggest avoiding prophylaxis; very-low-certainty evidence.",
-          "If nevertheless used: NCS prefers **levetiracetam over phenytoin** and **≤7 days**, conditionally.",
-        ],
-      },
-      {
-        label: "After early ICH seizure",
-        icon: "zap",
-        tone: "wine",
-        items: [
-          "Treat definite clinical or electrographic seizures; EEG if consciousness unexplained.",
-          "ESO/EANS 2025: evidence insufficient for a general immediate ASM recommendation after ASS.",
-          "Expert consensus: if started after ≤7-day seizure and seizure-free, consider discontinuation from **4 weeks** onward.",
-        ],
-      },
-    ],
-  },
-  {
-    kind: "columns",
-    section: "09",
-    title: "Aneurysmal SAH: seizure prevention is selective",
-    source: "p. 35",
-    visual: "vessel",
-    columns: [
-      {
-        label: "Who is high-risk?",
-        icon: "target",
-        tone: "gold",
-        items: [
-          "AHA/ASA 2023: consider prophylaxis only with ruptured MCA aneurysm, intraparenchymal hemorrhage, high-grade aSAH, hydrocephalus or cortical infarction.",
-          "A large minority may have electrographic seizures, especially with impaired consciousness.",
-          "Avoid routine phenytoin because of associated excess morbidity.",
-        ],
-      },
-      {
-        label: "When a seizure occurs",
-        icon: "zap",
-        tone: "wine",
-        items: [
-          "Treat new-onset seizure after aSAH with ASM for **7 days** (AHA/ASA 2023).",
-          "Evaluate rebleeding and aneurysm securement if deterioration or new seizure.",
-          "Longer therapy only if separate compelling indications, such as later epilepsy.",
-          "Consider cEEG with fluctuating or depressed consciousness.",
-        ],
-      },
-    ],
-  },
-  {
-    kind: "table",
-    section: "09",
-    title: "Cross-guideline comparison: three stroke scenarios",
-    source: "p. 36",
-    visual: "shield",
-    columns: ["Scenario", "Routine primary prophylaxis?", "If seizures / high risk", "Duration / evidence"],
-    widths: [0.72, 1, 1.1, 1.15],
-    rows: [
-      ["Acute ischemic stroke", "**No** — AHA/ASA 2026", "Early: treat and review; late: usually sustained ASM", "No fixed early duration established"],
-      ["Spontaneous ICH", "**No** — AHA/ASA 2022; ESO/EANS 2025; NCS 2025", "Treat definite events; EEG if altered consciousness", "Prophylaxis if used: NCS ≤7 days; after ASS: ESO/EANS consider stopping from week 4"],
-      ["Aneurysmal SAH", "**No universal prophylaxis** — AHA/ASA 2023", "May consider in specified high-risk patients; treat new-onset seizures", "AHA/ASA: 7 days after aSAH new-onset seizure; avoid phenytoin"],
-    ],
   },
 
   // ───────────── 10 · Long-term ASM ─────────────

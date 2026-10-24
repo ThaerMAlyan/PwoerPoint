@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "motion/react";
-import { useId } from "react";
-import type { EegSlide, IncidenceSlide, ScoreSlide, SevenDaySlide } from "@/lib/types";
+import { useId, useMemo } from "react";
+import type { EegPattern, EegPatternsSlide, IncidenceSlide, ScoreSlide, SevenDaySlide } from "@/lib/types";
 import { Icon } from "@/components/ui/Icon";
 import { CountUp, EASE, Reveal, Rich, T } from "@/components/ui/motion";
 import { Bullet, Callout, Card, IconBadge, Label, SlideFrame } from "./parts";
@@ -291,115 +291,294 @@ export function ScoreLayout({ slide }: { slide: ScoreSlide }) {
   );
 }
 
-/* ───────────────────────── EEG schematic tracings ───────────────────────── */
+/* ───────────────────────── EEG patterns (schematic bipolar montage) ───────────────────────── */
 
-const W = 1000;
-const H = 140;
-const Y0 = 76;
+const CHANNELS = ["Fp1-F7", "F7-T3", "T3-T5", "T5-O1", "Fp2-F8", "F8-T4", "T4-T6", "T6-O2"];
+const EW = 1000; // five seconds of tracing
+const SEC = EW / 5;
+const ROW = 100;
+const EH = ROW * (CHANNELS.length + 0.5); // half-row gap between the left and right chains
+const rowY = (c: number) => (c + (c >= 4 ? 0.5 : 0)) * ROW + ROW / 2;
+const pct = (v: number, of = EW) => `${(v / of) * 100}%`;
 
-function tracePath(pattern: EegSlide["traces"][number]["pattern"]) {
-  const pts: string[] = [`M0 ${Y0}`];
-  const push = (x: number, y: number) => pts.push(`L${x.toFixed(1)} ${y.toFixed(1)}`);
-  if (pattern === "slow") {
-    for (let x = 0; x <= W; x += 4) push(x, Y0 + Math.sin((x / 470) * Math.PI * 2 + 0.6) * 22);
-  } else if (pattern === "spike") {
-    const spikes = [230, 540, 850];
-    for (let x = 0; x <= W; x += 4) {
-      const s = spikes.find((sx) => x >= sx && x < sx + 24);
-      if (s !== undefined) {
-        push(s, Y0 - 2);
-        push(s + 5, Y0 - 62);
-        push(s + 12, Y0 + 40);
-        push(s + 18, Y0 + 38);
-        push(s + 24, Y0 + 2);
-        x = s + 24;
-      } else push(x, Y0 + Math.sin((x / 150) * Math.PI * 2) * 7 + Math.sin(x / 9) * 1.6);
-    }
-  } else {
-    // periodic discharge: sharp transient, then a slow after-going wave
-    const period = 220;
-    const ease = (u: number) => (1 - Math.cos(Math.PI * u)) / 2;
-    const lerp = (a: number, b: number, u: number) => a + (b - a) * ease(u);
-    for (let x = 0; x <= W; x += 4) {
-      const k = x % period;
-      if (k < 4) {
-        const base = x - k;
-        push(base, Y0 - 6);
-        push(base + 5, Y0 - 56);
-        push(base + 13, Y0 + 26);
-        x = base + 13;
-      } else {
-        const t = Math.min(1, Math.max(0, (k - 13) / (period - 13)));
-        push(x, t < 0.6 ? lerp(Y0 + 26, Y0 - 22, t / 0.6) : lerp(Y0 - 22, Y0 - 6, (t - 0.6) / 0.4));
-      }
-    }
-  }
-  return pts.join(" ");
+type TraceKind = EegPattern["trace"];
+
+/** Stretch of tracing that carries the abnormality, and the channels it involves. */
+const WINDOW: Record<TraceKind, { from: number; to: number; rows: number[] } | null> = {
+  background: null,
+  focalSlowing: { from: 290, to: 710, rows: [0, 1, 2, 3] },
+  spikeWave: { from: 430, to: 698, rows: [0, 1, 2, 3, 4, 5, 6, 7] },
+};
+const SPIKE_WAVE_PERIOD = 67; // ≈3 Hz at 200 units per second
+
+const TAU = Math.PI * 2;
+const ramp = (a: number, b: number, x: number) => {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
+
+/** Low-voltage mixed alpha/beta background; alpha is a little larger over the posterior chains. */
+function background(x: number, c: number) {
+  const posterior = c % 4 === 3 ? 1.35 : 1;
+  const envelope = 0.75 + 0.25 * Math.sin((x / 310) * TAU + c * 1.3);
+  return (
+    posterior * envelope * (7 * Math.sin((x / 21) * TAU + c * 0.9) + 2.4 * Math.sin((x / 8.6) * TAU + c * 2.1)) +
+    2.8 * Math.sin((x / 63) * TAU + c * 0.5)
+  );
 }
 
-function Trace({ pattern, tone, delay }: { pattern: EegSlide["traces"][number]["pattern"]; tone: string; delay: number }) {
-  const d = tracePath(pattern);
-  const dur = 2.6;
-  const clip = `clip${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
+/** One spike-and-wave complex, u ∈ [0, 1). Negative is up, as on an EEG page. */
+function spikeWave(u: number) {
+  if (u < 0.05) return -48 * (u / 0.05);
+  if (u < 0.12) return -48 + 64 * ((u - 0.05) / 0.07);
+  if (u < 0.2) return 16 * (1 - (u - 0.12) / 0.08);
+  return -26 * Math.sin((Math.PI * (u - 0.2)) / 0.8);
+}
+
+function sample(trace: TraceKind, x: number, c: number) {
+  const bg = background(x, c);
+  const win = WINDOW[trace];
+  if (!win) return bg;
+  if (trace === "focalSlowing") {
+    // delta replaces the faster rhythms, maximal over F7-T3 / T3-T5
+    const weight = c === 1 || c === 2 ? 1 : c === 0 || c === 3 ? 0.5 : 0;
+    const w = weight * ramp(win.from - 50, win.from + 50, x) * (1 - ramp(win.to - 50, win.to + 50, x));
+    return bg * (1 - 0.6 * w) + w * (32 * Math.sin((x / 108) * TAU + c * 0.7) + 9 * Math.sin((x / 46) * TAU + c * 1.9));
+  }
+  if (x < win.from || x >= win.to) return bg;
+  const amp = c % 4 === 0 || c % 4 === 3 ? 0.85 : 1;
+  return amp * spikeWave(((x - win.from) % SPIKE_WAVE_PERIOD) / SPIKE_WAVE_PERIOD) + 0.3 * bg;
+}
+
+function eegPath(trace: TraceKind, c: number) {
+  const win = WINDOW[trace];
+  const y0 = rowY(c);
+  let d = "";
+  for (let x = 0; x <= EW; ) {
+    d += `${d ? "L" : "M"}${x.toFixed(1)} ${(y0 + sample(trace, x, c)).toFixed(1)}`;
+    // sample spikes finely so their peaks stay sharp
+    x += trace === "spikeWave" && win && x >= win.from - 2 && x < win.to + 2 ? 0.5 : 2;
+  }
+  return d;
+}
+
+function PatternTrace({ pattern, delay, note, className = "" }: { pattern: EegPattern; delay: number; note?: string; className?: string }) {
+  const win = WINDOW[pattern.trace];
+  const paths = useMemo(() => CHANNELS.map((_, c) => eegPath(pattern.trace, c)), [pattern.trace]);
+  const uid = `eeg${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
+  const dur = 3.2;
+  const band = win && {
+    x: win.from,
+    y: rowY(win.rows[0]) - ROW / 2,
+    w: win.to - win.from,
+    h: rowY(win.rows[win.rows.length - 1]) - rowY(win.rows[0]) + ROW,
+  };
+  const reached = (x: number) => delay + dur * (x / EW);
   return (
-    <div className="relative h-full min-h-0 flex-1 overflow-hidden rounded-[16px] bg-surface-solid/60 ring-1 ring-hair">
-      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="absolute inset-0 h-full w-full" aria-hidden>
-        <defs>
-          {/* a sweeping clip reveals the tracing like a monitor pen */}
-          <clipPath id={clip}>
-            <motion.rect
-              x={0}
-              y={-10}
-              height={H + 20}
-              initial={{ width: 0 }}
-              animate={{ width: W }}
-              transition={{ duration: dur, delay, ease: "linear" }}
-            />
-          </clipPath>
-        </defs>
-        {Array.from({ length: 21 }).map((_, k) => (
-          <line key={k} x1={k * 50} x2={k * 50} y1={0} y2={H} className="s-hair" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+    <div className={`grid min-h-0 flex-1 grid-cols-[84px_1fr] grid-rows-[40px_1fr_34px] rounded-[18px] bg-surface-solid/60 pr-6 pl-5 ring-1 ring-hair ${className}`}>
+      <span />
+      <div className="relative">
+        {band && pattern.marker && (
+          <Reveal
+            delay={reached(band.x)}
+            y={6}
+            blur={false}
+            className="absolute inset-y-0 flex flex-col justify-end pb-1"
+            style={{ left: pct(band.x), width: pct(band.w) }}
+          >
+            <span className="text-center font-mono text-[13px] tracking-[0.16em] whitespace-nowrap text-(--tone-ink) uppercase">
+              {pattern.marker}
+            </span>
+            <span className="mt-1.5 h-2 rounded-t-[3px] border-x-2 border-t-2 border-(--tone)" />
+          </Reveal>
+        )}
+      </div>
+
+      <div className="relative">
+        {CHANNELS.map((ch, c) => (
+          <span
+            key={ch}
+            className="absolute left-0 -translate-y-1/2 font-mono text-[13px] whitespace-nowrap text-subtle"
+            style={{ top: pct(rowY(c), EH) }}
+          >
+            {ch}
+          </span>
         ))}
-        <line x1={0} x2={W} y1={Y0} y2={Y0} className="s-hair" strokeWidth={1} strokeDasharray="4 6" vectorEffect="non-scaling-stroke" />
-        <path
-          d={d}
-          fill="none"
-          className={`s-${tone}`}
-          strokeWidth={2.4}
-          strokeLinejoin="round"
-          strokeLinecap="round"
-          vectorEffect="non-scaling-stroke"
-          clipPath={`url(#${clip})`}
+      </div>
+      <div className="relative min-h-0">
+        <svg viewBox={`0 0 ${EW} ${EH}`} preserveAspectRatio="none" className="absolute inset-0 h-full w-full" aria-hidden>
+          <defs>
+            {/* a sweeping clip writes the page like an EEG pen */}
+            <clipPath id={`${uid}-sweep`}>
+              <motion.rect
+                x={-4}
+                y={-ROW}
+                height={EH + 2 * ROW}
+                initial={{ width: 0 }}
+                animate={{ width: EW + 8 }}
+                transition={{ duration: dur, delay, ease: "linear" }}
+              />
+            </clipPath>
+            {band && (
+              <clipPath id={`${uid}-band`}>
+                <rect x={band.x} y={band.y} width={band.w} height={band.h} />
+              </clipPath>
+            )}
+          </defs>
+          {Array.from({ length: EW / (SEC / 5) + 1 }).map((_, k) => (
+            <line
+              key={k}
+              x1={k * (SEC / 5)}
+              x2={k * (SEC / 5)}
+              y1={0}
+              y2={EH}
+              className="s-hair"
+              strokeWidth={1}
+              strokeOpacity={k % 5 ? 0.45 : 1}
+              vectorEffect="non-scaling-stroke"
+            />
+          ))}
+          {band && (
+            <motion.rect
+              x={band.x}
+              y={band.y}
+              width={band.w}
+              height={band.h}
+              className={`f-${pattern.tone}-soft`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.9 }}
+              transition={{ duration: 0.6, delay: reached(band.x) }}
+            />
+          )}
+          <g clipPath={`url(#${uid}-sweep)`}>
+            {paths.map((d, c) => (
+              <path
+                key={c}
+                d={d}
+                fill="none"
+                className={band ? undefined : `s-${pattern.tone}`}
+                style={band ? { stroke: "var(--c-muted)" } : undefined}
+                strokeOpacity={band ? 0.6 : 1}
+                strokeWidth={1.5}
+                strokeLinejoin="round"
+                vectorEffect="non-scaling-stroke"
+              />
+            ))}
+            {band && win && (
+              <g clipPath={`url(#${uid}-band)`}>
+                {win.rows.map((c) => (
+                  <path
+                    key={c}
+                    d={paths[c]}
+                    fill="none"
+                    className={`s-${pattern.tone}`}
+                    strokeWidth={2.1}
+                    strokeLinejoin="round"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                ))}
+              </g>
+            )}
+          </g>
+        </svg>
+        <motion.span
+          aria-hidden
+          className="absolute -inset-y-2 w-[3px] bg-gradient-to-b from-transparent via-(--tone) to-transparent"
+          initial={{ left: "0%", opacity: 0 }}
+          animate={{ left: "100%", opacity: [0, 1, 1, 0] }}
+          transition={{ duration: dur, delay, ease: "linear", opacity: { duration: dur, delay, times: [0, 0.04, 0.92, 1] } }}
         />
-      </svg>
-      <motion.span
-        aria-hidden
-        className={`absolute inset-y-0 w-[3px] bg-gradient-to-b from-transparent via-(--tone) to-transparent`}
-        initial={{ left: "0%", opacity: 0 }}
-        animate={{ left: "100%", opacity: [0, 1, 1, 0] }}
-        transition={{ duration: dur, delay, ease: "linear", opacity: { duration: dur, delay, times: [0, 0.05, 0.9, 1] } }}
-      />
+      </div>
+
+      <span />
+      <Reveal delay={delay + dur} y={6} blur={false} className="flex items-center justify-between gap-6">
+        <span className="font-mono text-[12px] tracking-[0.18em] text-subtle uppercase">{note}</span>
+        {/* calibration: 1 s across, 100 µV up */}
+        <span className="flex items-end gap-2.5 font-mono text-[12px] text-subtle" style={{ width: pct(SEC) }}>
+          <span className="relative h-[18px] flex-1 border-b-2 border-l-2 border-subtle/70" />
+          <span className="leading-none">1 s · 100 µV</span>
+        </span>
+      </Reveal>
     </div>
   );
 }
 
-export function EegLayout({ slide }: { slide: EegSlide }) {
+function PatternHeader({ pattern }: { pattern: EegPattern }) {
+  return (
+    <div className="flex items-center gap-5">
+      <span className="font-display grid size-[58px] shrink-0 place-items-center rounded-[18px] bg-(--tone-soft) text-[34px] leading-none text-(--tone-ink) italic ring-1 ring-(--tone)/20">
+        {pattern.num}
+      </span>
+      <h3 className="font-display text-[40px] leading-none text-ink">{pattern.label}</h3>
+      <span className="font-display ml-auto shrink-0 text-[25px] text-(--tone-ink) italic">({pattern.aside})</span>
+    </div>
+  );
+}
+
+function Findings({ label, items, delay, textClass }: { label: string; items: string[]; delay: number; textClass: string }) {
+  return (
+    <div className="flex flex-col">
+      <Label>{label}</Label>
+      <ul className="mt-3.5 flex flex-col gap-3">
+        {items.map((t, j) => (
+          <motion.li
+            key={j}
+            initial={{ opacity: 0, x: -14 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.7, delay: delay + j * 0.1, ease: EASE }}
+            className={`flex gap-4 leading-[1.38] text-muted ${textClass}`}
+          >
+            <Bullet />
+            <span>
+              <Rich text={t} />
+            </span>
+          </motion.li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export function EegPatternsLayout({ slide }: { slide: EegPatternsSlide }) {
+  if (slide.patterns.length === 1) {
+    const p = slide.patterns[0];
+    return (
+      <SlideFrame slide={slide}>
+        <Card tone={p.tone} delay={T.content} hover={false} className="flex min-h-0 flex-1 flex-col p-10">
+          <PatternHeader pattern={p} />
+          <div className="mt-7 grid min-h-0 flex-1 grid-cols-[1.6fr_1fr] gap-9">
+            <PatternTrace pattern={p} note={slide.note} delay={T.content + 0.45} />
+            <div className="flex flex-col gap-6">
+              <div className="flex flex-1 flex-col justify-center rounded-[22px] bg-(--tone-soft) px-8 py-7">
+                <Findings label="What it shows" items={p.shows} delay={T.content + 0.6} textClass="text-[25px]" />
+              </div>
+              <div className="flex flex-1 flex-col justify-center rounded-[22px] border border-line bg-surface-solid/60 px-8 py-7">
+                <Findings label="What it suggests" items={p.suggests} delay={T.content + 0.9} textClass="text-[25px]" />
+              </div>
+            </div>
+          </div>
+        </Card>
+      </SlideFrame>
+    );
+  }
   return (
     <SlideFrame slide={slide}>
-      <div className="flex min-h-0 flex-1 flex-col gap-5">
-        {slide.traces.map((t, i) => (
-          <Card key={t.label} tone={t.tone} delay={T.content + i * 0.15} hover={false} className="flex min-h-0 flex-1 items-center gap-9 py-5 pr-6 pl-9">
-            <div className="w-[380px] shrink-0">
-              <span className="rounded-full bg-(--tone-soft) px-4 py-1.5 font-mono text-[13px] tracking-[0.2em] text-(--tone-ink) uppercase">
-                {t.tag}
-              </span>
-              <h3 className="font-display mt-4 text-[31px] leading-tight text-ink">{t.label}</h3>
-            </div>
-            <Trace pattern={t.pattern} tone={t.tone} delay={T.content + 0.4 + i * 0.35} />
-          </Card>
-        ))}
+      {/* cards share row tracks (subgrid) so traces and findings line up side by side */}
+      <div className="grid min-h-0 flex-1 grid-cols-2 grid-rows-[auto_minmax(0,1fr)_auto] gap-x-8 gap-y-6">
+        {slide.patterns.map((p, i) => {
+          const d = T.content + i * 0.2;
+          return (
+            <Card key={p.num} tone={p.tone} delay={d} hover={false} className="row-span-3 grid min-h-0 grid-rows-subgrid p-8">
+              <PatternHeader pattern={p} />
+              <PatternTrace pattern={p} note={i === slide.patterns.length - 1 ? slide.note : undefined} delay={d + 0.45 + i * 0.5} />
+              <div className="grid grid-cols-2 gap-7">
+                <Findings label="What it shows" items={p.shows} delay={d + 0.6} textClass="text-[21px]" />
+                <Findings label="What it suggests" items={p.suggests} delay={d + 0.8} textClass="text-[21px]" />
+              </div>
+            </Card>
+          );
+        })}
       </div>
-      <Callout callout={{ tone: "info", text: slide.note }} delay={T.content + 1.4} className="mt-6" />
     </SlideFrame>
   );
 }
