@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, JetBrains_Mono, Manrope } from "next/font/google";
+import { Fraunces, IBM_Plex_Sans_Arabic, JetBrains_Mono, Manrope } from "next/font/google";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -18,6 +18,13 @@ const jetbrains = JetBrains_Mono({
   variable: "--font-jetbrains",
   subsets: ["latin"],
   weight: ["400", "500"],
+});
+
+// Arabic captions on the NCSE EEG slide
+const plexArabic = IBM_Plex_Sans_Arabic({
+  variable: "--font-plex-arabic",
+  subsets: ["arabic"],
+  weight: ["500"],
 });
 
 export const metadata: Metadata = {
@@ -39,7 +46,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       data-theme="light"
       suppressHydrationWarning
-      className={`${fraunces.variable} ${manrope.variable} ${jetbrains.variable} h-full`}
+      className={`${fraunces.variable} ${manrope.variable} ${jetbrains.variable} ${plexArabic.variable} h-full`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />

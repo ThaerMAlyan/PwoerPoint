@@ -89,6 +89,7 @@
   --font-display: var(--font-fraunces);
   --font-sans: var(--font-manrope);
   --font-mono: var(--font-jetbrains);
+  --font-arabic: var(--font-plex-arabic);
 }
 
 /* Tone scopes: components read --tone / --tone-soft / --tone-ink */

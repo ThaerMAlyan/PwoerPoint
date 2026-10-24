@@ -3,7 +3,7 @@
 import type { Slide } from "@/lib/types";
 import { CaseLayout, CardsLayout, ColumnsLayout, DrugsLayout, ReferencesLayout, RoadmapLayout, StepsLayout } from "./ContentLayouts";
 import { ClosingLayout, CoverLayout } from "./CoverSlides";
-import { FigureLayout, IncidenceLayout, ScoreLayout, SevenDayLayout } from "./DataLayouts";
+import { EegPatternsLayout, IncidenceLayout, ScoreLayout, SevenDayLayout } from "./DataLayouts";
 import { FlowLayout, TableLayout } from "./StructureLayouts";
 
 export function SlideView({ slide }: { slide: Slide }) {
@@ -30,8 +30,8 @@ export function SlideView({ slide }: { slide: Slide }) {
       return <StepsLayout slide={slide} />;
     case "score":
       return <ScoreLayout slide={slide} />;
-    case "figure":
-      return <FigureLayout slide={slide} />;
+    case "eegPatterns":
+      return <EegPatternsLayout slide={slide} />;
     case "drugs":
       return <DrugsLayout slide={slide} />;
     case "case":
