@@ -469,56 +469,26 @@ export const slides: Slide[] = [
     ],
   },
   {
-    kind: "eegPatterns",
+    kind: "figure",
     section: "04",
-    title: "EEG patterns: interictal background and focal slowing",
-    patterns: [
-      {
-        num: "1",
-        label: "Interictal EEG",
-        aside: "between seizures",
-        trace: "background",
-        tone: "teal",
-        shows: ["Normal background activity (e.g., alpha rhythm, theta, beta)", "No epileptiform discharges"],
-        suggests: ["Normal EEG or no evidence of active epileptiform activity between seizures"],
-      },
-      {
-        num: "2",
-        label: "Focal slowing",
-        aside: "e.g., left temporal slowing",
-        trace: "focalSlowing",
-        tone: "gold",
-        marker: "Focal slowing (left temporal)",
-        shows: ["Slower background rhythms (theta or delta)", "Often seen in a specific region (focal)", "No clear spikes or sharp waves"],
-        suggests: ["Focal cerebral dysfunction (e.g., structural lesion, ischemia, post-ictal state, or tumor)"],
-      },
-    ],
-    note: "Schematic bipolar tracings — not patient EEG",
+    title: "EEG patterns",
+    image: {
+      src: "/images/eeg-patterns.jpg",
+      width: 1280,
+      height: 1170,
+      alt: "EEG patterns: 1. interictal EEG (between seizures), 2. focal slowing (left temporal), 3. epileptiform discharges (spike and wave) — tracings with what each shows and suggests",
+    },
   },
   {
-    kind: "eegPatterns",
+    kind: "figure",
     section: "04",
-    title: "EEG patterns: epileptiform discharges",
-    patterns: [
-      {
-        num: "3",
-        label: "Epileptiform discharges",
-        aside: "e.g., spike and wave",
-        trace: "spikeWave",
-        tone: "wine",
-        marker: "Spike and wave discharge",
-        shows: [
-          "Sharp waves, spikes, or spike-and-wave complexes",
-          "Usually with a characteristic morphology",
-          "May be focal or generalized",
-        ],
-        suggests: [
-          "Increased risk of seizures / epilepsy",
-          "Helps with localization (focal) or classification (generalized vs focal)",
-        ],
-      },
-    ],
-    note: "Schematic bipolar tracings — not patient EEG",
+    title: "EEG patterns",
+    image: {
+      src: "/images/eeg-ncse-patterns.jpg",
+      width: 1280,
+      height: 720,
+      alt: "What EEG patterns may be seen in nonconvulsive status epilepticus: evolving rhythmic activity / electrographic seizure, generalized periodic discharges (GPDs) and lateralized periodic discharges (LPDs)",
+    },
   },
 
   // ───────────── 05 · Differential diagnosis ─────────────

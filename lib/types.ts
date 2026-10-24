@@ -212,23 +212,10 @@ export interface ScoreSlide extends Base {
   verdict: string;
 }
 
-export interface EegPattern {
-  num: string;
-  label: string;
-  aside: string;
-  trace: "background" | "focalSlowing" | "spikeWave";
-  tone: Tone;
-  /** Bracket label over the highlighted stretch of the tracing */
-  marker?: string;
-  shows: string[];
-  suggests: string[];
-}
-
-export interface EegPatternsSlide extends Base {
-  kind: "eegPatterns";
-  /** One pattern fills the slide; two sit side by side */
-  patterns: EegPattern[];
-  note: string;
+/** A full-slide picture taken unchanged from the source PPTX */
+export interface FigureSlide extends Base {
+  kind: "figure";
+  image: { src: string; width: number; height: number; alt: string };
 }
 
 export interface DrugsSlide extends Base {
@@ -266,7 +253,7 @@ export type Slide =
   | FlowSlide
   | StepsSlide
   | ScoreSlide
-  | EegPatternsSlide
+  | FigureSlide
   | DrugsSlide
   | CaseSlide
   | ReferencesSlide
